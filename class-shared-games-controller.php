@@ -34,60 +34,32 @@ class Shared_Games_Controller {
 	}
 
 	/**
-	 * Get games from fetch_bga_games
-	 * 
-	 */
-	public function get_bga_games() {
-		$bga_api_games = get_transient( 'shared_games_bga_games');
-		if ( false === $bga_api_games || empty( $bga_api_games ) ) {
-			$bga_games = $this->fetch_bga_games->fetch_bga_games();
-			set_transient( 'shared_games_bga_games', $bga_games);
-			$bga_games = get_transient( 'shared_games_bga_games');
-		}
-		return $bga_api_games;
-	}
-
-	/**
-	 * Get game categories from fetch_bga_categories.
-	 *
-	 */
-	public function get_bga_categories() {
-		$bga_api_categories = get_transient( 'shared_games_bga_categories');
-		if ( false === $bga_api_categories || empty( $bga_api_categories ) ) {
-			$bga_categories = $this->fetch_bga_games->fetch_bga_categories();
-			set_transient( 'shared_games_bga_categories', $bga_categories);
-			$bga_categories = get_transient( 'shared_games_bga_categories');
-		}
-		return $bga_api_categories;
-	}
-
-	/**
-	 * Process transients from BGA API to match games with their category name.
+	 * Process BGA API to match games with their category name.
 	 * 
 	 * @return array
 	 */
 	public function built_bga_games() {
-		$bga_categories_transient = $this->get_bga_categories();
-		$bga_games_transient      = $this->get_bga_games();
+		$bga_categories = $this->fetch_bga_games->fetch_bga_categories();
+		$bga_games      = $this->fetch_bga_games->fetch_bga_games();
 
-		if ( empty( $bga_categories_transient ) || empty( $bga_games_transient ) ) {
-			return new WP_Error( 'no_data', __( 'Could not find BGA API tranients to process games', 'shared-games' ) );
+		if ( empty( $bga_categories ) || empty( $bga_games ) ) {
+			return new WP_Error( 'no_data', __( 'Could not find BGA API to process games', 'shared-games' ) );
 		}
 
-		$bga_games = array();
-		array_walk( $bga_games_transient, function( $game ) use ( $bga_categories_transient, &$bga_games ) {
+		$new_bga_games = array();
+		array_walk( $bga_games, function( $game ) use ( $bga_categories, &$new_bga_games ) {
 			$game_categories = array();
 			foreach ( $game['categories'] as $category ) {
-				foreach ( $bga_categories_transient as $bga_category ) {
+				foreach ( $bga_categories as $bga_category ) {
 					if ( $category['id'] === $bga_category['id'] ) {
 						$game_categories['categories'][] = $bga_category['name'];
 					}
 				}
 			}
 			$game['categories'] = $game_categories;
-			$bga_games[]        = $game;
+			$new_bga_games[]    = $game;
 		} );
-		return $bga_games;
+		return $new_bga_games;
 	}
 
 	/**
@@ -118,15 +90,5 @@ class Shared_Games_Controller {
 			return new WP_Error( 'no_data', __( 'No new games to add', 'shared-games' ) );
 		}
 		return $inserted_games;
-	}
-
-	/**
-	 * Delete local transients/not sure if this is needed but it came to mind one night.
-	 * 
-	 */
-	public function validate_transients() {
-		//In the future this should compare a new count from api with count in tranients before deleting.
-		delete_transient( 'shared_games_bga_games' );
-		delete_transient( 'shared_games_bga_categories' );
 	}
 }
