@@ -8,4 +8,9 @@ An API for Board Game Atlas
 4. Click Fetch API
 5. Click Insert Missing BGA Games
 
+## Board Game Atlas Rate Limits
+The API allows for up to **60 requests per minute** per client_id. Exceeding this amount will result in an HTTP 429 Too Many Requests status code.
+
+**All data is updated only every 24 hours** so additional requests will not result in new data.
+
 
