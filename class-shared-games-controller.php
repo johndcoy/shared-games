@@ -47,7 +47,6 @@ class Shared_Games_Controller {
 		}
 
 		array_walk( $bga_games, function( &$games ) use ( $bga_categories ) {
-			//make sure games has categories key and bga_categories is not empty
 			if ( ! array_key_exists( 'categories', $games ) || empty( $bga_categories ) ) {
 				return new WP_Error( 'no_data', __( 'BGA API returned games without categories or empty categories response', 'shared-games' ) );
 			}
