@@ -41,25 +41,27 @@ class Shared_Games_Controller {
 	public function built_bga_games() {
 		$bga_categories = $this->fetch_bga_games->fetch_bga_categories();
 		$bga_games      = $this->fetch_bga_games->fetch_bga_games();
-
+		
 		if ( empty( $bga_categories ) || empty( $bga_games ) ) {
-			return new WP_Error( 'no_data', __( 'Could not find BGA API to process games', 'shared-games' ) );
+			return new WP_Error( 'no_data', __( 'BGA API returned empty games or empty categories', 'shared-games' ) );
 		}
 
-		$new_bga_games = array();
-		array_walk( $bga_games, function( $game ) use ( $bga_categories, &$new_bga_games ) {
+		array_walk( $bga_games, function( &$games ) use ( $bga_categories ) {
+			//make sure games has categories key and bga_categories is not empty
+			if ( ! array_key_exists( 'categories', $games ) || empty( $bga_categories ) ) {
+				return new WP_Error( 'no_data', __( 'BGA API returned games without categories or empty categories response', 'shared-games' ) );
+			}
 			$game_categories = array();
-			foreach ( $game['categories'] as $category ) {
+			foreach ( $games['categories'] as $category ) {
 				foreach ( $bga_categories as $bga_category ) {
 					if ( $category['id'] === $bga_category['id'] ) {
-						$game_categories['categories'][] = $bga_category['name'];
+						$game_categories[] = $bga_category['name'];
 					}
 				}
 			}
-			$game['categories'] = $game_categories;
-			$new_bga_games[]    = $game;
+			$games['categories'] = $game_categories;
 		} );
-		return $new_bga_games;
+		return $bga_games;
 	}
 
 	/**
