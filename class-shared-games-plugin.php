@@ -259,7 +259,6 @@ class Shared_Games_Plugin {
 			$this->options['client_id'] = esc_html( $this->options['client_id'] );
 		}
 		echo '<input name="shared_games_settings[client_id]" type="text" value="' . esc_attr( $this->client_id ) . '">';
-
 	}
 }
 

@@ -39,27 +39,20 @@ class Shared_Games_Controller {
 	 * @return array
 	 */
 	public function built_bga_games() {
-		$bga_categories = $this->fetch_bga_games->fetch_bga_categories();
 		$bga_games      = $this->fetch_bga_games->fetch_bga_games();
-		
-		if ( empty( $bga_categories ) || empty( $bga_games ) ) {
+		$bga_categories = $this->fetch_bga_games->fetch_bga_categories();
+
+		if ( empty( $bga_categories ) || empty( $bga_games ) || is_null( $bga_categories ) ||  is_null( $bga_games ) ) {
 			return new WP_Error( 'no_data', __( 'BGA API returned empty games or empty categories', 'shared-games' ) );
 		}
+		$sorted_categories = array_column( $bga_categories, 'name', 'id' );
 
-		array_walk( $bga_games, function( &$games ) use ( $bga_categories ) {
-			if ( ! array_key_exists( 'categories', $games ) || empty( $bga_categories ) ) {
-				return new WP_Error( 'no_data', __( 'BGA API returned games without categories or empty categories response', 'shared-games' ) );
+		//if categories id is in the game categories array, add the category name to the game categories array
+		array_walk( $bga_games, function( &$games ) use ( $sorted_categories ) {
+			foreach ( $games['categories'] as $key => $value ) {
+				$games['categories'][$key]['name'] = $sorted_categories[$value['id']];
 			}
-			$game_categories = array();
-			foreach ( $games['categories'] as $category ) {
-				foreach ( $bga_categories as $bga_category ) {
-					if ( $category['id'] === $bga_category['id'] ) {
-						$game_categories[] = $bga_category['name'];
-					}
-				}
-			}
-			$games['categories'] = $game_categories;
-		} );
+		});
 		return $bga_games;
 	}
 
@@ -69,13 +62,9 @@ class Shared_Games_Controller {
 	 * @return array
 	 */
 	public function insert_missing_bga_games() {
-		$bga_games = $this->built_bga_games();
-		$bga_games_id = array_column( $bga_games, 'id' );
+		$bga_games              = $this->built_bga_games();
+		$bga_games_id           = array_column( $bga_games, 'id' );
 		$local_board_games_meta = array_column ( $this->db->get_games_meta_bga_id(), 'meta_value' );
-		
-		if ( empty( $bga_games ) ) {
-			return new WP_Error( 'no_data', __( 'Could not find BGA API data to compare with local data', 'shared-games' ) );
-		}
 		
 		//get the games that are missing from the local database by comparing bda_games_id with local_board_games_meta
 		$missing_games = array_diff( $bga_games_id, $local_board_games_meta );

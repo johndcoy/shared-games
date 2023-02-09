@@ -5,6 +5,7 @@
 		<?php submit_button(); ?>
 	</form>
 	<?php
+	
 	if ( isset( $_POST ['insert_missing_bga_games'] ) ) {
 		$fetch_bga_games = new Shared_Games_Controller();
 		$fetch_bga_games->insert_missing_bga_games();
